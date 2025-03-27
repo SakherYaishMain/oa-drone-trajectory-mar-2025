@@ -21,16 +21,18 @@ def compute_focal_length_in_mm(camera: Camera) -> np.ndarray:
     # return np.array([camera.fx * pixel_to_mm_x, camera.fy * pixel_to_mm_y])
 
 def project_world_point_to_image(camera: Camera, point: np.ndarray) -> np.ndarray:
-    """Project a 3D world point into the image coordinates.
+    if point.shape != (3,):
+        raise ValueError("Point must be a 3D vector (shape: (3,))")
 
-    Args:
-        camera (Camera): the camera model
-        point (np.ndarray): the 3D world point
+    X, Y, Z = point
 
-    Returns:
-        np.ndarray: [u, v] pixel coordinates corresponding to the point.
-    """
-    raise NotImplementedError()
+    if Z <= 0:
+        raise ValueError("Point is behind the camera or on the image plane (Z must be > 0)")
+
+    u = camera.fx * (X / Z) + camera.cx
+    v = camera.fy * (Y / Z) + camera.cy
+
+    return np.array([u, v])
 
 
 def compute_image_footprint_on_surface(camera: Camera, distance_from_surface: float) -> np.ndarray:
