@@ -40,7 +40,11 @@ def compute_speed_during_photo_capture(camera: Camera, dataset_spec: DatasetSpec
     Returns:
         float: The speed at which the drone should move during photo capture.
     """
-    raise NotImplementedError()
+    gsd = compute_ground_sampling_distance(camera, dataset_spec.height)  # in meters per pixel
+    exposure_time_sec = dataset_spec.exposure_time_ms / 1000  # convert ms to seconds
+
+    speed = gsd * allowed_movement_px / exposure_time_sec
+    return speed
 
 
 def generate_photo_plan_on_grid(camera: Camera, dataset_spec: DatasetSpec) -> T.List[Waypoint]:
@@ -54,4 +58,27 @@ def generate_photo_plan_on_grid(camera: Camera, dataset_spec: DatasetSpec) -> T.
         List[Waypoint]: scan plan as a list of waypoints.
 
     """
-    raise NotImplementedError()
+    distance_x, distance_y = compute_distance_between_images(camera, dataset_spec)
+
+    num_cols = math.ceil(dataset_spec.scan_dimension_x / distance_x)
+    num_rows = math.ceil(dataset_spec.scan_dimension_y / distance_y)
+
+    speed = compute_speed_during_photo_capture(camera, dataset_spec)
+
+    waypoints = []
+    for row in range(num_rows):
+        y = row * distance_y
+        row_waypoints = []
+
+        for col in range(num_cols):
+            x = col * distance_x
+            row_waypoints.append(Waypoint(x=x, y=y, z=dataset_spec.height, speed=speed))
+
+        # Reverse direction every other row for lawn-mower pattern
+        if row % 2 == 1:
+            row_waypoints.reverse()
+
+        waypoints.extend(row_waypoints)
+
+    return waypoints
+
