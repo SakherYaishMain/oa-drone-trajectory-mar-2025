@@ -31,4 +31,7 @@ class Waypoint:
     """
     Waypoints are positions where the drone should fly to and capture a photo.
     """
-    pass
+    x: float  # meters
+    y: float  # meters
+    z: float  # height (dataset_spec.height)
+    speed: float  # m/s
